@@ -6,6 +6,7 @@
         Pass
         {
             Tags { "LightMode"="Deferred" }
+            Cull Off
             CGPROGRAM
             #pragma target 4.0
             #pragma vertex Vertex
@@ -18,6 +19,7 @@
         Pass
         {
             Tags { "LightMode"="ShadowCaster" }
+            Cull Off
             CGPROGRAM
             #pragma target 4.0
             #pragma vertex Vertex

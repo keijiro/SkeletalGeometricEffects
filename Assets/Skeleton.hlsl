@@ -70,7 +70,7 @@ Varyings VertexOutput(float3 wpos, half3 wnrm)
     return o;
 }
 
-[maxvertexcount(24)]
+[maxvertexcount(60)]
 void Geometry(
     line float4 input[2] : POSITION,
     uint pid : SV_PrimitiveID,
@@ -80,13 +80,32 @@ void Geometry(
     // Input vertices
     float3 p0 = input[0].xyz;
     float3 p1 = input[1].xyz;
-    float3 p2 = (p0 + p1) / 2 + float3(1, 0, 0);
 
-    float nrm = normalize(cross(p1 - p0, p2 - p0));
-    outStream.Append(VertexOutput(p0, nrm));
-    outStream.Append(VertexOutput(p1, nrm));
-    outStream.Append(VertexOutput(p2, nrm));
+    float3 az = normalize(p1 - p0);
+    float3 ax = normalize(cross(az, float3(0, 1, 1)));
+    float3 ay = cross(az, ax);
+
+    const int DIV = 30;
+    const float RADIUS = 0.1;
+
+    float theta = _Time.y * 5;
+    float3 ext = az * 0.02;
+
+    for (uint i = 0; i < DIV; i++)
+    {
+        float3 p = lerp(p0, p1, float(i) / DIV);
+
+        float3 pd = ax * cos(theta) + ay * sin(theta);
+        p += pd * RADIUS;
+
+        outStream.Append(VertexOutput(p - ext, pd));
+        outStream.Append(VertexOutput(p + ext, pd));
+
+        theta += 0.6;
+    }
+
     outStream.RestartStrip();
+
 }
 
 //
@@ -112,6 +131,7 @@ half4 Fragment() : SV_Target { return 0; }
 // GBuffer construction pass
 void Fragment(
     Varyings input,
+    float vface : VFACE,
     out half4 outGBuffer0 : SV_Target0,
     out half4 outGBuffer1 : SV_Target1,
     out half4 outGBuffer2 : SV_Target2,
@@ -137,7 +157,7 @@ void Fragment(
     data.occlusion = 1;
     data.specularColor = c_spec;
     data.smoothness = _Glossiness;
-    data.normalWorld = input.normal;
+    data.normalWorld = input.normal * (vface < 0 ? -1 : 1);
     UnityStandardDataToGbuffer(data, outGBuffer0, outGBuffer1, outGBuffer2);
 
     // Output ambient light to the emission buffer.
