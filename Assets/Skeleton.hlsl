@@ -9,6 +9,13 @@
 #define PASS_CUBE_SHADOWCASTER
 #endif
 
+// Vertex attributes
+struct Attributes
+{
+    float4 position : POSITION;
+    float2 texcoord : TEXCOORD;
+};
+
 // Fragment varyings
 struct Varyings
 {
@@ -34,10 +41,10 @@ struct Varyings
 // Vertex stage
 //
 
-float4 Vertex(float4 position : POSITION) : POSITION
+void Vertex(inout Attributes input)
 {
     // Only do object space to world space transform.
-    return mul(unity_ObjectToWorld, position);
+    input.position = mul(unity_ObjectToWorld, input.position);
 }
 
 //
@@ -72,20 +79,23 @@ Varyings VertexOutput(float3 wpos, half3 wnrm)
 
 [maxvertexcount(60)]
 void Geometry(
-    line float4 input[2] : POSITION,
+    line Attributes input[2] : POSITION,
     uint pid : SV_PrimitiveID,
     inout TriangleStream<Varyings> outStream
 )
 {
     // Input vertices
-    float3 p0 = input[0].xyz;
-    float3 p1 = input[1].xyz;
+    float3 p0 = input[0].position.xyz;
+    float3 p1 = input[1].position.xyz;
+
+    float t0 = input[0].texcoord.x;
+    float t1 = input[1].texcoord.x;
 
     float3 az = normalize(p1 - p0);
     float3 ax = normalize(cross(az, float3(0, 1, 1)));
     float3 ay = cross(az, ax);
 
-    const int DIV = 30;
+    const uint DIV = 30;
     const float RADIUS = 0.1;
 
     float theta = _Time.y * 5;
@@ -94,18 +104,18 @@ void Geometry(
     for (uint i = 0; i < DIV; i++)
     {
         float3 p = lerp(p0, p1, float(i) / DIV);
+        float t = lerp(t0, t1, float(i) / DIV);
 
         float3 pd = ax * cos(theta) + ay * sin(theta);
-        p += pd * RADIUS;
+        p += pd * RADIUS * (1 + snoise(float3(t * 2, 0, _Time.y * 2)));
 
         outStream.Append(VertexOutput(p - ext, pd));
         outStream.Append(VertexOutput(p + ext, pd));
 
-        theta += 0.6;
+        theta += 4 * UNITY_PI * distance(p0, p1) / DIV;
     }
 
     outStream.RestartStrip();
-
 }
 
 //
