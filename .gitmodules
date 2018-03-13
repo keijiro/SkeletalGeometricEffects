@@ -1,0 +1,3 @@
+[submodule "Packages/jp.keijiro.test-assets"]
+	path = Packages/jp.keijiro.test-assets
+	url = git@github.com:keijiro/jp.keijiro.test-assets.git
