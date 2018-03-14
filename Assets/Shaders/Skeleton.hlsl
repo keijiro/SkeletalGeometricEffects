@@ -109,19 +109,22 @@ void Geometry(
     // Time parameters
     float time = _Time.y + Random(uid) * 10;
     float vel = 3 * lerp(0.2, 1, Random(uid + 1));
-    float avel = 16 * lerp(-1, 1, Random(uid + 2));
+    float avel = 0*0.5 * lerp(-1, 1, Random(uid + 2));
 
     // Constants
     const uint segments = 16;
-    const float radius = 0.11 * (0.5 + Random(uid + 3));
+    const float radius = 0.15;//* (0.2 + Random(uid + 3));
     const float3 extent = az * 0.02;
-    const float trail = 0.2;
+    const float trail = 0.25;
 
     // Geometry construction
     float param = vel * time;
     float3 last = p1;
 
-    half em = Random(floor((uid + _Time.y) / 4)) > 0.9;
+    //half em = Random(floor((uid + _Time.y) / 4)) > 0.9;
+    half em = snoise(float3(uid + _Time.y, 0, 0) * 2);
+    //em = pow(abs(em), 10) * 15;
+    em = smoothstep(0.55, 0.65, em) * 1.75;
 
     for (uint i = 0; i < segments; i++)
     {
@@ -130,9 +133,15 @@ void Geometry(
 
         float theta = avel * param;
         float3 pd = ax * cos(theta) + ay * sin(theta);
-        vp += pd * radius * (0.8 + snoise(float3(param * 4, primitiveID, time)));
+        //vp += pd * radius * (0.8 + 1 * snoise(float3(param * 6, primitiveID, time)));
+        float sn1 = snoise(float3(param * 3, uid + 20, time));
+        float sn2 = snoise(float3(param * 3, uid - 34, time));
+        sn1 += snoise(float3(param * 6, uid + 20, time)) / 2;
+        sn2 += snoise(float3(param * 6, uid - 34, time)) / 2;
+        vp += ax * radius * sn1;
+        vp += ay * radius * sn2;
 
-        param_f += 0.1 * snoise(float3(param * 4, primitiveID + 100, time));
+        param_f += 0.2 * snoise(float3(param * 4, primitiveID + 100, time));
         float w = smoothstep(trail, 0.5, param_f) * smoothstep(trail, 0.5, 1 - param_f);
 
         float3 pn = normalize(cross(az, vp - last));
@@ -199,7 +208,7 @@ void Fragment(
     half3 sh = ShadeSHPerPixel(data.normalWorld, input.ambient, input.wpos);
     outEmission = half4(sh * data.diffuseColor, 1);
 
-    outEmission += half4(0.3, 0.4, 1.2, 0) * 1.5 * input.emission;
+    outEmission += half4(0.2, 0.3, 1.2, 0) * input.emission;
 }
 
 #endif
