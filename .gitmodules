@@ -9,3 +9,6 @@
 	path = Packages/jp.keijiro.neolowman
 	url = git@github.com:keijiro/NeoLowMan.git
 	branch = upm
+[submodule "Packages/jp.keijiro.ffmpegout"]
+	path = Packages/jp.keijiro.ffmpegout
+	url = git@github.com:keijiro/jp.keijiro.ffmpegout.git
