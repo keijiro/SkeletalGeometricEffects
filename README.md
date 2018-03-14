@@ -12,10 +12,11 @@ This project requires Unity 2018.1 or later.
 
 This repository uses [Git submodules] to manage UPM (Unity Package Manager)
 packages. **If you know Git well and how to use Git submodule,** simply clone
-this repository and update the submodules. **If you're not sure what Git
-submodule is,** download the contents of this repository from [zip download
-link]. After extracting the zip file, download and extract the following
-packages into the `Package` directory.
+this repository and update the submodules.
+
+**If you're not sure what Git submodule is,** download the contents of this
+repository from [zip download link]. After extracting the zip file, download
+and extract the following packages into the `Package` directory.
 
 - [jp.keijiro.cmu-mocap](https://github.com/keijiro/CMUMocap/archive/upm.zip)
 - [jp.keijiro.neolowman](https://github.com/keijiro/NeoLowMan/archive/upm.zip)
