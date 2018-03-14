@@ -19,9 +19,10 @@ repository from [zip download link]. After extracting the zip file, download
 and extract the following packages into the `Package` directory.
 
 - [jp.keijiro.cmu-mocap](https://github.com/keijiro/CMUMocap/archive/upm.zip)
+- [jp.keijiro.ffmpegout](https://github.com/keijiro/jp.keijiro.ffmpegout/archive/master.zip)
+- [jp.keijiro.klak](https://github.com/keijiro/Klak/archive/upm.zip)
 - [jp.keijiro.neolowman](https://github.com/keijiro/NeoLowMan/archive/upm.zip)
 - [jp.keijiro.test-assets](https://github.com/keijiro/jp.keijiro.test-assets/archive/master.zip)
-- [jp.keijiro.ffmpegout](https://github.com/keijiro/jp.keijiro.ffmpegout/archive/master.zip)
 
 [zip download link]: https://github.com/keijiro/SkeletalGeometricEffects/archive/master.zip
 [Git submodules]: https://git-scm.com/book/en/v2/Git-Tools-Submodules

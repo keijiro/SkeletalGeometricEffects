@@ -38,6 +38,7 @@ struct Varyings
     float3 normal : NORMAL;
     half3 ambient : TEXCOORD0;
     float3 wpos : TEXCOORD1;
+    float emission : TEXCOORD2;
 
 #endif
 };
@@ -57,7 +58,7 @@ void Vertex(inout Attributes input)
 // Geometry stage
 //
 
-Varyings VertexOutput(float3 wpos, half3 wnrm)
+Varyings VertexOutput(float3 wpos, half3 wnrm, half em)
 {
     Varyings o;
 
@@ -78,6 +79,7 @@ Varyings VertexOutput(float3 wpos, half3 wnrm)
     o.normal = wnrm;
     o.ambient = ShadeSHPerVertex(wnrm, 0);
     o.wpos = wpos;
+    o.emission = em;
 
 #endif
     return o;
@@ -106,18 +108,20 @@ void Geometry(
 
     // Time parameters
     float time = _Time.y + Random(uid) * 10;
-    float vel = 1 * lerp(0.5, 1, Random(uid + 1));
-    float avel = 60 * lerp(-1, 1, Random(uid + 2));
+    float vel = 3 * lerp(0.2, 1, Random(uid + 1));
+    float avel = 16 * lerp(-1, 1, Random(uid + 2));
 
     // Constants
     const uint segments = 16;
-    const float radius = 0.08 * (0.5 + Random(uid + 3));
+    const float radius = 0.11 * (0.5 + Random(uid + 3));
     const float3 extent = az * 0.02;
     const float trail = 0.2;
 
     // Geometry construction
     float param = vel * time;
     float3 last = p1;
+
+    half em = Random(floor((uid + _Time.y) / 4)) > 0.9;
 
     for (uint i = 0; i < segments; i++)
     {
@@ -126,14 +130,15 @@ void Geometry(
 
         float theta = avel * param;
         float3 pd = ax * cos(theta) + ay * sin(theta);
-        vp += pd * radius * (1 + snoise(float3(param * 20, primitiveID, time * 2)));
+        vp += pd * radius * (0.8 + snoise(float3(param * 4, primitiveID, time)));
 
+        param_f += 0.1 * snoise(float3(param * 4, primitiveID + 100, time));
         float w = smoothstep(trail, 0.5, param_f) * smoothstep(trail, 0.5, 1 - param_f);
 
         float3 pn = normalize(cross(az, vp - last));
 
-        outStream.Append(VertexOutput(vp - extent * w, pn));
-        outStream.Append(VertexOutput(vp + extent * w, pn));
+        outStream.Append(VertexOutput(vp - extent * w, pn, em));
+        outStream.Append(VertexOutput(vp + extent * w, pn, em));
 
         last = vp;
         param += trail / segments;
@@ -193,6 +198,8 @@ void Fragment(
     // Output ambient light to the emission buffer.
     half3 sh = ShadeSHPerPixel(data.normalWorld, input.ambient, input.wpos);
     outEmission = half4(sh * data.diffuseColor, 1);
+
+    outEmission += half4(0.3, 0.4, 1.2, 0) * 1.5 * input.emission;
 }
 
 #endif

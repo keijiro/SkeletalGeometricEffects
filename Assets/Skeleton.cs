@@ -50,6 +50,7 @@ public class Skeleton : MonoBehaviour
         _mesh.SetVertices(_vertices);
         _mesh.SetNormals(_normals);
         _mesh.SetIndices(indices, MeshTopology.Lines, 0);
+        _mesh.bounds = new Bounds(Vector3.zero, Vector3.one * 1000);
 
         _material = new Material(_shader);
     }
