@@ -9,6 +9,18 @@
     SubShader
     {
         Tags { "RenderType"="Opaque" }
+        /*
+        Pass
+        {
+            CGPROGRAM
+            #pragma vertex Vertex
+            #pragma fragment Fragment
+            float4 Vertex(float4 position : POSITION) : SV_Position { return UnityObjectToClipPos(position); }
+            float4 Fragment(float4 position : SV_Position) : SV_Target { return 1; }
+            ENDCG
+        }
+        */
+
         Pass
         {
             Tags { "LightMode"="Deferred" }

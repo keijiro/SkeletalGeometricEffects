@@ -38,7 +38,7 @@ MonoBehaviour:
     overrideState: 0
     value: {fileID: 0}
   tonemapper:
-    overrideState: 1
+    overrideState: 0
     value: 1
   toneCurveToeStrength:
     overrideState: 0
@@ -84,7 +84,7 @@ MonoBehaviour:
     value: 0
   postExposure:
     overrideState: 1
-    value: 1.4
+    value: 2
   contrast:
     overrideState: 0
     value: 0
