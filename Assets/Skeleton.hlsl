@@ -9,11 +9,16 @@
 #define PASS_CUBE_SHADOWCASTER
 #endif
 
+// Material properties
+half4 _Color;
+half _Metallic;
+half _Glossiness;
+
 // Vertex attributes
 struct Attributes
 {
     float4 position : POSITION;
-    float2 texcoord : TEXCOORD;
+    float3 normal : NORMAL;
 };
 
 // Fragment varyings
@@ -45,6 +50,7 @@ void Vertex(inout Attributes input)
 {
     // Only do object space to world space transform.
     input.position = mul(unity_ObjectToWorld, input.position);
+    input.normal = UnityObjectToWorldNormal(input.normal);
 }
 
 //
@@ -77,42 +83,60 @@ Varyings VertexOutput(float3 wpos, half3 wnrm)
     return o;
 }
 
-[maxvertexcount(60)]
+[maxvertexcount(32)]
+[instance(32)]
 void Geometry(
-    line Attributes input[2] : POSITION,
-    uint pid : SV_PrimitiveID,
+    uint primitiveID : SV_PrimitiveID,
+    uint instanceID : SV_GSInstanceID,
+    line Attributes input[2],
     inout TriangleStream<Varyings> outStream
 )
 {
+    // Unique ID
+    uint uid = (primitiveID * 100 + instanceID) * 20;
+
     // Input vertices
-    float3 p0 = input[0].position.xyz;
-    float3 p1 = input[1].position.xyz;
+    float3 p1 = input[0].position.xyz;
+    float3 p2 = input[1].position.xyz;
 
-    float t0 = input[0].texcoord.x;
-    float t1 = input[1].texcoord.x;
-
-    float3 az = normalize(p1 - p0);
-    float3 ax = normalize(cross(az, float3(0, 1, 1)));
+    // Bone axes
+    float3 az = normalize(p2 - p1);
+    float3 ax = normalize(cross(az, input[0].normal));
     float3 ay = cross(az, ax);
 
-    const uint DIV = 30;
-    const float RADIUS = 0.1;
+    // Time parameters
+    float time = _Time.y + Random(uid) * 10;
+    float vel = 1 * lerp(0.5, 1, Random(uid + 1));
+    float avel = 60 * lerp(-1, 1, Random(uid + 2));
 
-    float theta = _Time.y * 5;
-    float3 ext = az * 0.02;
+    // Constants
+    const uint segments = 16;
+    const float radius = 0.08 * (0.5 + Random(uid + 3));
+    const float3 extent = az * 0.02;
+    const float trail = 0.2;
 
-    for (uint i = 0; i < DIV; i++)
+    // Geometry construction
+    float param = vel * time;
+    float3 last = p1;
+
+    for (uint i = 0; i < segments; i++)
     {
-        float3 p = lerp(p0, p1, float(i) / DIV);
-        float t = lerp(t0, t1, float(i) / DIV);
+        float param_f = frac(param);
+        float3 vp = lerp(p1, p2, param_f * 3 - 1);
 
+        float theta = avel * param;
         float3 pd = ax * cos(theta) + ay * sin(theta);
-        p += pd * RADIUS * (1 + snoise(float3(t * 2, 0, _Time.y * 2)));
+        vp += pd * radius * (1 + snoise(float3(param * 20, primitiveID, time * 2)));
 
-        outStream.Append(VertexOutput(p - ext, pd));
-        outStream.Append(VertexOutput(p + ext, pd));
+        float w = smoothstep(trail, 0.5, param_f) * smoothstep(trail, 0.5, 1 - param_f);
 
-        theta += 4 * UNITY_PI * distance(p0, p1) / DIV;
+        float3 pn = normalize(cross(az, vp - last));
+
+        outStream.Append(VertexOutput(vp - extent * w, pn));
+        outStream.Append(VertexOutput(vp + extent * w, pn));
+
+        last = vp;
+        param += trail / segments;
     }
 
     outStream.RestartStrip();
@@ -148,10 +172,6 @@ void Fragment(
     out half4 outEmission : SV_Target3
 )
 {
-    half4 _Color = 1;
-    half _Metallic = 0.5;
-    half _Glossiness = 0.5;
-
     // PBS workflow conversion (metallic -> specular)
     half3 c_diff, c_spec;
     half not_in_use;

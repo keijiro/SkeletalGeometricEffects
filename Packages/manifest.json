@@ -1,4 +1,5 @@
 {
-	"dependencies": {
-	}
+  "dependencies": {
+    "com.unity.postprocessing": "2.0.2-preview"
+  }
 }
