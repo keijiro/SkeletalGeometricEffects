@@ -4,6 +4,7 @@ Skeletal Geometric Effects
 Experiments on geometry shader instancing with skeletal animations.
 
 ![gif](https://i.imgur.com/qgbgx3G.gif)
+![gif](https://i.imgur.com/j2N4bOQ.gif)
 
 How to play with this thing
 ---------------------------
