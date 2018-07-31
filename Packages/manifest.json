@@ -1,5 +1,12 @@
 {
   "dependencies": {
-    "com.unity.postprocessing": "2.0.2-preview"
+    "com.unity.package-manager-ui": "1.9.11",
+    "com.unity.postprocessing": "2.0.10-preview",
+    "com.unity.modules.animation": "1.0.0",
+    "com.unity.modules.director": "1.0.0",
+    "com.unity.modules.imgui": "1.0.0",
+    "com.unity.modules.particlesystem": "1.0.0",
+    "com.unity.modules.physics": "1.0.0",
+    "com.unity.modules.vr": "1.0.0"
   }
 }
