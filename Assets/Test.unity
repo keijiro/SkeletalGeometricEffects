@@ -322,9 +322,9 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 100002, guid: a2e23193c976434eb66491671c592689,
     type: 3}
   m_PrefabInternal: {fileID: 640605538}
---- !u!4 &640605540 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 400006, guid: a2e23193c976434eb66491671c592689,
+--- !u!95 &640605541 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 9500000, guid: a2e23193c976434eb66491671c592689,
     type: 3}
   m_PrefabInternal: {fileID: 640605538}
 --- !u!1 &989936483
@@ -649,8 +649,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2929aa32001bfb149b885b7170b91ac7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _root: {fileID: 640605540}
-  _minJointDistance: 0.12
+  _animator: {fileID: 640605541}
   _color: {r: 0.8490566, g: 0.244304, b: 0.244304, a: 1}
   _metallic: 0.8
   _smoothness: 0.5
