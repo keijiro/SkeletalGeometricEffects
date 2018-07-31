@@ -19,6 +19,7 @@ struct Attributes
 {
     float4 position : POSITION;
     float3 normal : NORMAL;
+    half2 texcoord : TEXCOORD;
 };
 
 // Fragment varyings
@@ -113,7 +114,7 @@ void Geometry(
 
     // Constants
     const uint segments = 16;
-    const float radius = 0.15;//* (0.2 + Random(uid + 3));
+    const float radius = 0.15 * input[0].texcoord.x;//* (0.2 + Random(uid + 3));
     const float3 extent = az * 0.02;
     const float trail = 0.25;
 

@@ -1,47 +1,71 @@
-﻿using UnityEngine;
+﻿// Geometry shader instancing with skeletal animations
+// https://github.com/keijiro/SkeletalGeometricEffects
+
+using UnityEngine;
 using System.Collections.Generic;
 
 public class Skeleton : MonoBehaviour
 {
     #region Editable variables
 
-    [SerializeField] Animator _animator;
-    [SerializeField] Color _color = Color.white;
-    [SerializeField] float _metallic = 0;
-    [SerializeField] float _smoothness = 0.5f;
+    [SerializeField] Animator _sourceAnimator;
+    [SerializeField, ColorUsage(false)] Color _baseColor = Color.white;
+    [SerializeField, Range(0, 1)] float _metallic = 0;
+    [SerializeField, Range(0, 1)] float _smoothness = 0.5f;
 
     [SerializeField, HideInInspector] Shader _shader;
 
     #endregion
 
-    #region Private field memebers
+    #region Bone definitions
 
-    static readonly HumanBodyBones[] BonePairs = new [] {
-        HumanBodyBones.Hips,            HumanBodyBones.LeftUpperLeg,
-        HumanBodyBones.LeftUpperLeg,    HumanBodyBones.LeftLowerLeg,
-        HumanBodyBones.LeftLowerLeg,    HumanBodyBones.LeftFoot,
-        HumanBodyBones.LeftFoot,        HumanBodyBones.LeftToes,
+    [System.Serializable] struct Bone
+    {
+        public HumanBodyBones JointFrom;
+        public HumanBodyBones JointTo;
+        public float Radius;
 
-        HumanBodyBones.Hips,            HumanBodyBones.RightUpperLeg,
-        HumanBodyBones.RightUpperLeg,   HumanBodyBones.RightLowerLeg,
-        HumanBodyBones.RightLowerLeg,   HumanBodyBones.RightFoot,
-        HumanBodyBones.RightFoot,       HumanBodyBones.RightToes,
+        public Bone(HumanBodyBones from, HumanBodyBones to, float radius)
+        {
+            JointFrom = from;
+            JointTo = to;
+            Radius = radius;
+        }
+    }
 
-        HumanBodyBones.Hips,            HumanBodyBones.Chest,
-        HumanBodyBones.Chest,           HumanBodyBones.Neck,
-        HumanBodyBones.Neck,            HumanBodyBones.Head,
+    [SerializeField] Bone[] _boneList = new []
+    {
+        new Bone(HumanBodyBones.Hips,          HumanBodyBones.LeftUpperLeg,  1),
+        new Bone(HumanBodyBones.LeftUpperLeg,  HumanBodyBones.LeftLowerLeg,  1),
+        new Bone(HumanBodyBones.LeftLowerLeg,  HumanBodyBones.LeftFoot,      1),
+        new Bone(HumanBodyBones.LeftFoot,      HumanBodyBones.LeftToes,      1),
 
-        HumanBodyBones.Neck,            HumanBodyBones.LeftUpperArm,
-        HumanBodyBones.LeftUpperArm,    HumanBodyBones.LeftLowerArm,
-        HumanBodyBones.LeftLowerArm,    HumanBodyBones.LeftHand,
+        new Bone(HumanBodyBones.Hips,          HumanBodyBones.RightUpperLeg, 1),
+        new Bone(HumanBodyBones.RightUpperLeg, HumanBodyBones.RightLowerLeg, 1),
+        new Bone(HumanBodyBones.RightLowerLeg, HumanBodyBones.RightFoot,     1),
+        new Bone(HumanBodyBones.RightFoot,     HumanBodyBones.RightToes,     1),
 
-        HumanBodyBones.Neck,            HumanBodyBones.RightUpperArm,
-        HumanBodyBones.RightUpperArm,   HumanBodyBones.RightLowerArm,
-        HumanBodyBones.RightLowerArm,   HumanBodyBones.RightHand
+        new Bone(HumanBodyBones.Hips,          HumanBodyBones.Chest,         1),
+        new Bone(HumanBodyBones.Chest,         HumanBodyBones.Neck,          1),
+        new Bone(HumanBodyBones.Neck,          HumanBodyBones.Head,          1),
+
+        new Bone(HumanBodyBones.Neck,          HumanBodyBones.LeftUpperArm,  1),
+        new Bone(HumanBodyBones.LeftUpperArm,  HumanBodyBones.LeftLowerArm,  1),
+        new Bone(HumanBodyBones.LeftLowerArm,  HumanBodyBones.LeftHand,      1),
+
+        new Bone(HumanBodyBones.Neck,          HumanBodyBones.RightUpperArm, 1),
+        new Bone(HumanBodyBones.RightUpperArm, HumanBodyBones.RightLowerArm, 1),
+        new Bone(HumanBodyBones.RightLowerArm, HumanBodyBones.RightHand,     1)
     };
+
+    #endregion
+
+    #region Private field memebers
 
     List<Vector3> _vertices;
     List<Vector3> _normals;
+    List<Vector4> _tangents;
+    List<Vector2> _texcoords;
 
     Mesh _mesh;
     Material _material;
@@ -52,22 +76,28 @@ public class Skeleton : MonoBehaviour
 
     void Start()
     {
-        var boneCount = BonePairs.Length;
+        var vcount = _boneList.Length * 2;
 
-        _vertices = new List<Vector3>(boneCount);
-        _normals = new List<Vector3>(boneCount);
-        var indices = new int[boneCount];
+        _vertices = new List<Vector3>(vcount);
+        _normals = new List<Vector3>(vcount);
+        _tangents = new List<Vector4>(vcount);
+        _texcoords = new List<Vector2>(vcount);
+        var indices = new int[vcount];
 
-        for (var i = 0; i < boneCount; i++)
+        for (var i = 0; i < vcount; i++)
         {
             _vertices.Add(Vector3.zero);
             _normals.Add(Vector3.up);
+            _tangents.Add(Vector4.one);
+            _texcoords.Add(Vector2.zero);
             indices[i] = i;
         }
 
         _mesh = new Mesh();
         _mesh.SetVertices(_vertices);
         _mesh.SetNormals(_normals);
+        _mesh.SetTangents(_tangents);
+        _mesh.SetUVs(0, _texcoords);
         _mesh.SetIndices(indices, MeshTopology.Lines, 0);
         _mesh.bounds = new Bounds(Vector3.zero, Vector3.one * 1000);
 
@@ -82,21 +112,34 @@ public class Skeleton : MonoBehaviour
 
     void Update()
     {
-        for (var i = 0; i < BonePairs.Length; i += 2)
+        var i = 0;
+
+        foreach (var bone in _boneList)
         {
-            var bone1 = _animator.GetBoneTransform(BonePairs[i    ]);
-            var bone2 = _animator.GetBoneTransform(BonePairs[i + 1]);
+            var joint1 = _sourceAnimator.GetBoneTransform(bone.JointFrom);
+            var joint2 = _sourceAnimator.GetBoneTransform(bone.JointTo);
 
-            _vertices[i    ] = bone1.position;
-            _vertices[i + 1] = bone2.position;
+            _vertices[i    ] = joint1.position;
+            _vertices[i + 1] = joint2.position;
 
-            _normals[i] = _normals[i + 1] = bone1.up;
+            _normals[i    ] = joint1.up;
+            _normals[i + 1] = joint2.up;
+
+            _tangents[i    ] = MakeTangent(joint1);
+            _tangents[i + 1] = MakeTangent(joint2);
+
+            _texcoords[i    ] = new Vector2(bone.Radius, 0);
+            _texcoords[i + 1] = new Vector2(bone.Radius, 0);
+
+            i += 2;
         }
 
         _mesh.SetVertices(_vertices);
         _mesh.SetNormals(_normals);
+        _mesh.SetTangents(_tangents);
+        _mesh.SetUVs(0, _texcoords);
 
-        _material.SetColor("_Color", _color);
+        _material.SetColor("_Color", _baseColor);
         _material.SetFloat("_Metallic", _metallic);
         _material.SetFloat("_Glossiness", _smoothness);
 
@@ -104,6 +147,16 @@ public class Skeleton : MonoBehaviour
             _mesh, transform.localToWorldMatrix,
             _material, gameObject.layer
         );
+    }
+
+    #endregion
+
+    #region Private methods
+
+    static Vector4 MakeTangent(Transform t)
+    {
+        var v = t.right;
+        return new Vector4(v.x, v.y, v.z, 1);
     }
 
     #endregion

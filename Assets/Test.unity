@@ -649,11 +649,57 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2929aa32001bfb149b885b7170b91ac7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _animator: {fileID: 640605541}
-  _color: {r: 0.8490566, g: 0.244304, b: 0.244304, a: 1}
+  _sourceAnimator: {fileID: 640605541}
+  _baseColor: {r: 1, g: 0.19394591, b: 0.11792451, a: 1}
   _metallic: 0.8
   _smoothness: 0.5
   _shader: {fileID: 4800000, guid: bf3c20d05194de249973608a80309b01, type: 3}
+  _boneList:
+  - JointFrom: 1
+    JointTo: 3
+    Radius: 0.7
+  - JointFrom: 3
+    JointTo: 5
+    Radius: 0.65
+  - JointFrom: 5
+    JointTo: 19
+    Radius: 0.3
+  - JointFrom: 2
+    JointTo: 4
+    Radius: 0.7
+  - JointFrom: 4
+    JointTo: 6
+    Radius: 0.65
+  - JointFrom: 6
+    JointTo: 20
+    Radius: 0.3
+  - JointFrom: 0
+    JointTo: 8
+    Radius: 1
+  - JointFrom: 8
+    JointTo: 9
+    Radius: 1
+  - JointFrom: 9
+    JointTo: 10
+    Radius: 0.85
+  - JointFrom: 9
+    JointTo: 13
+    Radius: 0.5
+  - JointFrom: 13
+    JointTo: 15
+    Radius: 0.5
+  - JointFrom: 15
+    JointTo: 17
+    Radius: 0.5
+  - JointFrom: 9
+    JointTo: 14
+    Radius: 0.5
+  - JointFrom: 14
+    JointTo: 16
+    Radius: 0.5
+  - JointFrom: 16
+    JointTo: 18
+    Radius: 0.5
 --- !u!4 &1357171059
 Transform:
   m_ObjectHideFlags: 0
