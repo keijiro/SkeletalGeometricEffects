@@ -2,10 +2,12 @@
 // https://github.com/keijiro/SkeletalGeometricEffects
 
 using UnityEngine;
+using UnityEngine.Playables;
+using UnityEngine.Timeline;
 using System.Collections.Generic;
 
 [ExecuteInEditMode]
-public class Skeleton : MonoBehaviour
+public class Skeleton : MonoBehaviour, ITimeControl, IPropertyPreview
 {
     #region Editable variables
 
@@ -61,9 +63,55 @@ public class Skeleton : MonoBehaviour
 
     #endregion
 
-    #region Private members
+    #region Shader property IDs
 
-    Material _material;
+    static class ShaderID
+    {
+        public static readonly int Color = Shader.PropertyToID("_Color");
+        public static readonly int Metallic = Shader.PropertyToID("_Metallic");
+        public static readonly int Glossiness = Shader.PropertyToID("_Glossiness");
+        public static readonly int LocalTime = Shader.PropertyToID("_LocalTime");
+    }
+
+    #endregion
+
+    #region ITimeControl implementation
+
+    float _controlTime = -1;
+
+    public void OnControlTimeStart()
+    {
+    }
+
+    public void OnControlTimeStop()
+    {
+        _controlTime = -1;
+    }
+
+    public void SetTime(double time)
+    {
+        _controlTime = (float)time;
+    }
+
+    float LocalTime
+    {
+        get
+        {
+            if (_controlTime < 0)
+                return Application.isPlaying ? Time.time : 0;
+            else
+                return _controlTime;
+        }
+    }
+
+    #endregion
+
+    #region IPropertyPreview implementation
+
+    public void GatherProperties(PlayableDirector director, IPropertyCollector driver)
+    {
+        // There is nothing controllable.
+    }
 
     #endregion
 
@@ -113,12 +161,10 @@ public class Skeleton : MonoBehaviour
 
     void DrawMesh()
     {
-        var time = Application.isPlaying ? Time.time : 10.0f;
-
-        _material.SetColor("_Color", _baseColor);
-        _material.SetFloat("_Metallic", _metallic);
-        _material.SetFloat("_Glossiness", _smoothness);
-        _material.SetFloat("_LocalTime", time);
+        _material.SetColor(ShaderID.Color, _baseColor);
+        _material.SetFloat(ShaderID.Metallic, _metallic);
+        _material.SetFloat(ShaderID.Glossiness, _smoothness);
+        _material.SetFloat(ShaderID.LocalTime, LocalTime);
 
         Graphics.DrawMesh(
             _mesh, transform.localToWorldMatrix,
@@ -130,13 +176,13 @@ public class Skeleton : MonoBehaviour
 
     #region MonoBehaviour implementation
 
+    Material _material;
+
     void OnValidate()
     {
         // Dispose the current mesh if the vertex count doesn't match.
         if (_mesh != null && _mesh.GetIndexCount(0) != _boneList.Length * 2)
-        {
             _mesh.Clear();
-        }
     }
 
     void OnDestroy()
