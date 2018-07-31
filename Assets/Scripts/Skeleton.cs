@@ -4,6 +4,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+[ExecuteInEditMode]
 public class Skeleton : MonoBehaviour
 {
     #region Editable variables
@@ -60,85 +61,118 @@ public class Skeleton : MonoBehaviour
 
     #endregion
 
-    #region Private field memebers
+    #region Private members
 
-    List<Vector3> _vertices;
-    List<Vector3> _normals;
-    List<Vector2> _texcoords;
-
-    Mesh _mesh;
     Material _material;
 
     #endregion
 
-    #region MonoBehaviour implementation
+    #region Mesh operations
 
-    void Start()
+    List<Vector3> _vertices  = new List<Vector3>();
+    List<Vector3> _normals   = new List<Vector3>();
+    List<Vector2> _texcoords = new List<Vector2>();
+    Mesh _mesh;
+
+    void InitializeIndices()
     {
         var vcount = _boneList.Length * 2;
-
-        _vertices = new List<Vector3>(vcount);
-        _normals = new List<Vector3>(vcount);
-        _texcoords = new List<Vector2>(vcount);
         var indices = new int[vcount];
-
-        for (var i = 0; i < vcount; i++)
-        {
-            _vertices.Add(Vector3.zero);
-            _normals.Add(Vector3.up);
-            _texcoords.Add(Vector2.zero);
-            indices[i] = i;
-        }
-
-        _mesh = new Mesh();
-        _mesh.SetVertices(_vertices);
-        _mesh.SetNormals(_normals);
-        _mesh.SetUVs(0, _texcoords);
+        for (var i = 0; i < vcount; i++) indices[i] = i;
         _mesh.SetIndices(indices, MeshTopology.Lines, 0);
         _mesh.bounds = new Bounds(Vector3.zero, Vector3.one * 1000);
-
-        _material = new Material(_shader);
     }
 
-    void OnDestroy()
+    void UpdateMesh()
     {
-        if (_mesh != null) Destroy(_mesh);
-        if (_material != null) Destroy(_material);
-    }
-
-    void Update()
-    {
-        var i = 0;
+        _vertices .Clear();
+        _normals  .Clear();
+        _texcoords.Clear();
 
         foreach (var bone in _boneList)
         {
             var joint1 = _sourceAnimator.GetBoneTransform(bone.JointFrom);
             var joint2 = _sourceAnimator.GetBoneTransform(bone.JointTo);
 
-            _vertices[i    ] = joint1.position;
-            _vertices[i + 1] = joint2.position;
+            _vertices.Add(joint1.position);
+            _vertices.Add(joint2.position);
 
-            _normals[i    ] = joint1.up;
-            _normals[i + 1] = joint2.up;
+            _normals.Add(joint1.up);
+            _normals.Add(joint2.up);
 
-            _texcoords[i    ] = new Vector2(bone.Radius, 0);
-            _texcoords[i + 1] = new Vector2(bone.Radius, 0);
-
-            i += 2;
+            _texcoords.Add(Vector2.one * bone.Radius);
+            _texcoords.Add(Vector2.one * bone.Radius);
         }
 
         _mesh.SetVertices(_vertices);
         _mesh.SetNormals(_normals);
         _mesh.SetUVs(0, _texcoords);
 
+        if (_mesh.GetIndexCount(0) == 0) InitializeIndices();
+    }
+
+    void DrawMesh()
+    {
+        var time = Application.isPlaying ? Time.time : 10.0f;
+
         _material.SetColor("_Color", _baseColor);
         _material.SetFloat("_Metallic", _metallic);
         _material.SetFloat("_Glossiness", _smoothness);
+        _material.SetFloat("_LocalTime", time);
 
         Graphics.DrawMesh(
             _mesh, transform.localToWorldMatrix,
             _material, gameObject.layer
         );
+    }
+
+    #endregion
+
+    #region MonoBehaviour implementation
+
+    void OnValidate()
+    {
+        // Dispose the current mesh if the vertex count doesn't match.
+        if (_mesh != null && _mesh.GetIndexCount(0) != _boneList.Length * 2)
+        {
+            _mesh.Clear();
+        }
+    }
+
+    void OnDestroy()
+    {
+        if (Application.isPlaying)
+        {
+            if (_mesh != null) Destroy(_mesh);
+            if (_material != null) Destroy(_material);
+        }
+        else
+        {
+            if (_mesh != null) DestroyImmediate(_mesh);
+            if (_material != null) DestroyImmediate(_material);
+        }
+
+        _mesh = null;
+        _material = null;
+    }
+
+    void Update()
+    {
+        // Lazy initialization
+        if (_mesh == null)
+        {
+            _mesh = new Mesh();
+            _mesh.hideFlags = HideFlags.DontSave;
+        }
+
+        if (_material == null)
+        {
+            _material = new Material(_shader);
+            _material.hideFlags = HideFlags.DontSave;
+        }
+
+        UpdateMesh();
+        DrawMesh();
     }
 
     #endregion

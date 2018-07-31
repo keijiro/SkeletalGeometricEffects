@@ -13,6 +13,7 @@
 half4 _Color;
 half _Metallic;
 half _Glossiness;
+float _LocalTime;
 
 // Vertex attributes
 struct Attributes
@@ -113,7 +114,7 @@ void Geometry(
     half3 ay = cross(az, ax);
 
     // Time parameters
-    float time = _Time.y + Random(uid) * 10;
+    float time = _LocalTime + Random(uid) * 10;
     float vel = 3 * lerp(0.2, 1, Random(uid + 1));
     float avel = 0*0.5 * lerp(-1, 1, Random(uid + 2));
 
@@ -127,7 +128,7 @@ void Geometry(
     float3 last = p1;
 
     //half em = Random(floor((uid + _Time.y) / 4)) > 0.9;
-    half em = snoise(float3(uid + _Time.y, 0, 0) * 2);
+    half em = snoise(float3(uid + _LocalTime, 0, 0) * 2);
     //em = pow(abs(em), 10) * 15;
     em = smoothstep(0.55, 0.65, em) * 1.75;
 
