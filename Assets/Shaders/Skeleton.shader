@@ -1,14 +1,14 @@
-﻿Shader "Skeleton"
+﻿Shader "Hidden/Skeleton"
 {
     Properties
     {
-        _Color("Color", Color) = (1, 1, 1, 1)
-        [Gamma] _Metallic("Metallic", Range(0, 1)) = 0
-        _Glossiness("Smoothness", Range(0, 1)) = 0.5
+        _Color("", Color) = (1, 1, 1, 1)
+        [Gamma] _Metallic("", Range(0, 1)) = 0
     }
     SubShader
     {
         Tags { "RenderType"="Opaque" }
+
         /*
         Pass
         {
@@ -34,6 +34,7 @@
             #include "Skeleton.hlsl"
             ENDCG
         }
+
         Pass
         {
             Tags { "LightMode"="ShadowCaster" }
@@ -44,9 +45,6 @@
             #pragma geometry Geometry
             #pragma fragment Fragment
             #pragma multi_compile_prepassfinal noshadowmask nodynlightmap nodirlightmap nolightmap
-            #ifndef UNITY_PASS_SHADOWCASTER
-            #define UNITY_PASS_SHADOWCASTER
-            #endif
             #include "Skeleton.hlsl"
             ENDCG
         }

@@ -18,7 +18,7 @@ half _Glossiness;
 struct Attributes
 {
     float4 position : POSITION;
-    float3 normal : NORMAL;
+    half3 normal : NORMAL;
     half2 texcoord : TEXCOORD;
 };
 
@@ -26,21 +26,17 @@ struct Attributes
 struct Varyings
 {
     float4 position : SV_POSITION;
-
 #if defined(PASS_CUBE_SHADOWCASTER)
     // Cube map shadow caster pass
     float3 shadow : TEXCOORD0;
-
 #elif defined(UNITY_PASS_SHADOWCASTER)
     // Default shadow caster pass
-
 #else
     // GBuffer construction pass
     float3 normal : NORMAL;
     half3 ambient : TEXCOORD0;
     float3 wpos : TEXCOORD1;
     float emission : TEXCOORD2;
-
 #endif
 };
 
@@ -64,17 +60,20 @@ Varyings VertexOutput(float3 wpos, half3 wnrm, half em)
     Varyings o;
 
 #if defined(PASS_CUBE_SHADOWCASTER)
+
     // Cube map shadow caster pass: Transfer the shadow vector.
     o.position = UnityWorldToClipPos(float4(wpos, 1));
     o.shadow = wpos - _LightPositionRange.xyz;
 
 #elif defined(UNITY_PASS_SHADOWCASTER)
+
     // Default shadow caster pass: Apply the shadow bias.
     float scos = dot(wnrm, normalize(UnityWorldSpaceLightDir(wpos)));
     wpos -= wnrm * unity_LightShadowBias.z * sqrt(1 - scos * scos);
     o.position = UnityApplyLinearShadowBias(UnityWorldToClipPos(float4(wpos, 1)));
 
 #else
+
     // GBuffer construction pass
     o.position = UnityWorldToClipPos(float4(wpos, 1));
     o.normal = wnrm;
@@ -83,11 +82,12 @@ Varyings VertexOutput(float3 wpos, half3 wnrm, half em)
     o.emission = em;
 
 #endif
+
     return o;
 }
 
-[maxvertexcount(32)]
 [instance(32)]
+[maxvertexcount(32)]
 void Geometry(
     uint primitiveID : SV_PrimitiveID,
     uint instanceID : SV_GSInstanceID,
@@ -95,17 +95,22 @@ void Geometry(
     inout TriangleStream<Varyings> outStream
 )
 {
+    const float _Radius = 0.15;
+
     // Unique ID
-    uint uid = (primitiveID * 100 + instanceID) * 20;
+    uint uid = (primitiveID * 53 + instanceID) * 79;
 
     // Input vertices
     float3 p1 = input[0].position.xyz;
     float3 p2 = input[1].position.xyz;
 
+    // Bone parameters
+    half radius = input[0].texcoord.x * _Radius;
+
     // Bone axes
-    float3 az = normalize(p2 - p1);
-    float3 ax = normalize(cross(az, input[0].normal));
-    float3 ay = cross(az, ax);
+    half3 az = normalize(p2 - p1);
+    half3 ax = normalize(cross(az, input[0].normal));
+    half3 ay = cross(az, ax);
 
     // Time parameters
     float time = _Time.y + Random(uid) * 10;
@@ -114,7 +119,6 @@ void Geometry(
 
     // Constants
     const uint segments = 16;
-    const float radius = 0.15 * input[0].texcoord.x;//* (0.2 + Random(uid + 3));
     const float3 extent = az * 0.02;
     const float trail = 0.25;
 

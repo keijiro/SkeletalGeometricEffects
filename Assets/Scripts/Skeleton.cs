@@ -64,7 +64,6 @@ public class Skeleton : MonoBehaviour
 
     List<Vector3> _vertices;
     List<Vector3> _normals;
-    List<Vector4> _tangents;
     List<Vector2> _texcoords;
 
     Mesh _mesh;
@@ -80,7 +79,6 @@ public class Skeleton : MonoBehaviour
 
         _vertices = new List<Vector3>(vcount);
         _normals = new List<Vector3>(vcount);
-        _tangents = new List<Vector4>(vcount);
         _texcoords = new List<Vector2>(vcount);
         var indices = new int[vcount];
 
@@ -88,7 +86,6 @@ public class Skeleton : MonoBehaviour
         {
             _vertices.Add(Vector3.zero);
             _normals.Add(Vector3.up);
-            _tangents.Add(Vector4.one);
             _texcoords.Add(Vector2.zero);
             indices[i] = i;
         }
@@ -96,7 +93,6 @@ public class Skeleton : MonoBehaviour
         _mesh = new Mesh();
         _mesh.SetVertices(_vertices);
         _mesh.SetNormals(_normals);
-        _mesh.SetTangents(_tangents);
         _mesh.SetUVs(0, _texcoords);
         _mesh.SetIndices(indices, MeshTopology.Lines, 0);
         _mesh.bounds = new Bounds(Vector3.zero, Vector3.one * 1000);
@@ -125,9 +121,6 @@ public class Skeleton : MonoBehaviour
             _normals[i    ] = joint1.up;
             _normals[i + 1] = joint2.up;
 
-            _tangents[i    ] = MakeTangent(joint1);
-            _tangents[i + 1] = MakeTangent(joint2);
-
             _texcoords[i    ] = new Vector2(bone.Radius, 0);
             _texcoords[i + 1] = new Vector2(bone.Radius, 0);
 
@@ -136,7 +129,6 @@ public class Skeleton : MonoBehaviour
 
         _mesh.SetVertices(_vertices);
         _mesh.SetNormals(_normals);
-        _mesh.SetTangents(_tangents);
         _mesh.SetUVs(0, _texcoords);
 
         _material.SetColor("_Color", _baseColor);
@@ -147,16 +139,6 @@ public class Skeleton : MonoBehaviour
             _mesh, transform.localToWorldMatrix,
             _material, gameObject.layer
         );
-    }
-
-    #endregion
-
-    #region Private methods
-
-    static Vector4 MakeTangent(Transform t)
-    {
-        var v = t.right;
-        return new Vector4(v.x, v.y, v.z, 1);
     }
 
     #endregion
