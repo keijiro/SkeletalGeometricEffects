@@ -6,6 +6,9 @@ Experiments on geometry shader instancing with skeletal animations.
 ![gif](https://i.imgur.com/OFi7fsr.gif)
 ![gif](https://i.imgur.com/pEqZEk3.gif)
 
+![gif](https://i.imgur.com/bAIGbry.gif)
+![gif](https://i.imgur.com/plNjuNT.gif)
+
 How to open this project with Unity
 -----------------------------------
 
