@@ -31,6 +31,8 @@ namespace GeoFx
         [SerializeField, ColorUsage(false, true)] Color _emissiveColor = Color.white;
         [SerializeField, Range(0, 1)] float _hilight = 0.1f;
 
+        [SerializeField] bool _debug;
+
         [SerializeField, HideInInspector] Shader _shader;
 
         #endregion
@@ -212,6 +214,11 @@ namespace GeoFx
             _material.SetVector(ShaderID.MatParams, mparams);
             _material.SetVector(ShaderID.BaseHSVM, ColorToHsvm(_baseColor));
             _material.SetVector(ShaderID.AddHSVM, ColorToHsvm(_emissiveColor));
+
+            if (_debug)
+                _material.EnableKeyword("GEOFX_DEBUG");
+            else
+                _material.DisableKeyword("GEOFX_DEBUG");
 
             Graphics.DrawMesh(
                 _mesh, transform.localToWorldMatrix,

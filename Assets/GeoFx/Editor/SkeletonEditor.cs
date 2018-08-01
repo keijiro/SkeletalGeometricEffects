@@ -28,6 +28,8 @@ namespace GeoFx
         SerializedProperty _emissiveColor;
         SerializedProperty _hilight;
 
+        SerializedProperty _debug;
+
         ReorderableList _boneList;
 
         void OnEnable()
@@ -49,6 +51,8 @@ namespace GeoFx
             _smoothness = serializedObject.FindProperty("_smoothness");
             _emissiveColor = serializedObject.FindProperty("_emissiveColor");
             _hilight = serializedObject.FindProperty("_hilight");
+
+            _debug = serializedObject.FindProperty("_debug");
 
             _boneList = new ReorderableList(
                 serializedObject,
@@ -118,6 +122,10 @@ namespace GeoFx
             EditorGUILayout.PropertyField(_smoothness);
             EditorGUILayout.PropertyField(_emissiveColor);
             EditorGUILayout.PropertyField(_hilight);
+
+            EditorGUILayout.Space();
+
+            EditorGUILayout.PropertyField(_debug);
 
             EditorGUILayout.Space();
 
