@@ -1,7 +1,7 @@
 #include "Common.hlsl"
 #include "UnityGBuffer.cginc"
 #include "UnityStandardUtils.cginc"
-#include "SimplexNoise3D.hlsl"
+#include "SimplexNoise2D.hlsl"
 
 // Cube map shadow caster; Used to render point light shadows on platforms
 // that lacks depth cube map support.
@@ -9,11 +9,14 @@
 #define PASS_CUBE_SHADOWCASTER
 #endif
 
+// Effect properties
+float3 _GeoParams; // radius, length, width
+float _GeoTime;
+
 // Material properties
-half4 _Color;
-half _Metallic;
-half _Glossiness;
-float _LocalTime;
+half4 _BaseHSVM;
+half4 _AddHSVM;
+half3 _MatParams; // metallic, smoothness, hue shift
 
 // Vertex attributes
 struct Attributes
@@ -34,10 +37,10 @@ struct Varyings
     // Default shadow caster pass
 #else
     // GBuffer construction pass
+    half2 color : COLOR;
     float3 normal : NORMAL;
     half3 ambient : TEXCOORD0;
     float3 wpos : TEXCOORD1;
-    float emission : TEXCOORD2;
 #endif
 };
 
@@ -56,7 +59,7 @@ void Vertex(inout Attributes input)
 // Geometry stage
 //
 
-Varyings VertexOutput(float3 wpos, half3 wnrm, half em)
+Varyings VertexOutput(float3 wpos, half3 wnrm, half em, half rand)
 {
     Varyings o;
 
@@ -77,18 +80,21 @@ Varyings VertexOutput(float3 wpos, half3 wnrm, half em)
 
     // GBuffer construction pass
     o.position = UnityWorldToClipPos(float4(wpos, 1));
+    o.color = half2(em, rand);
     o.normal = wnrm;
     o.ambient = ShadeSHPerVertex(wnrm, 0);
     o.wpos = wpos;
-    o.emission = em;
 
 #endif
 
     return o;
 }
 
-[instance(32)]
-[maxvertexcount(32)]
+#define GEOFX_INSTANCE_COUNT 32
+#define GEOFX_POINT_COUNT 16
+
+[instance(GEOFX_INSTANCE_COUNT)]
+[maxvertexcount(GEOFX_POINT_COUNT * 2)]
 void Geometry(
     uint primitiveID : SV_PrimitiveID,
     uint instanceID : SV_GSInstanceID,
@@ -96,67 +102,68 @@ void Geometry(
     inout TriangleStream<Varyings> outStream
 )
 {
-    const float _Radius = 0.25;
-
     // Unique ID
-    uint uid = (primitiveID * 53 + instanceID) * 79;
+    uint id = (primitiveID * GEOFX_INSTANCE_COUNT + instanceID) * 299;
 
     // Input vertices
-    float3 p1 = input[0].position.xyz;
-    float3 p2 = input[1].position.xyz;
+    float3 p0 = input[0].position.xyz;
+    float3 p1 = input[1].position.xyz;
 
-    // Bone parameters
-    half radius = input[0].texcoord.x * _Radius;
+    // Bone parameter
+    float baseRadius = input[0].texcoord.x * _GeoParams.x;
 
-    // Bone axes
-    half3 az = normalize(p2 - p1);
+    // Bone space axes
+    half3 az = normalize(p1 - p0);
     half3 ax = normalize(cross(az, input[0].normal));
     half3 ay = cross(az, ax);
 
     // Time parameters
-    float time = _LocalTime + Random(uid) * 10;
-    float vel = 3 * lerp(0.2, 1, Random(uid + 1));
-    float avel = 0*0.5 * lerp(-1, 1, Random(uid + 2));
+    float baseTime = _GeoTime * (0.5 + Random(id + 44)) + Random(id) * 100;
 
-    // Constants
-    const uint segments = 16;
-    const float3 extent = az * 0.02;
-    const float trail = 0.25;
-
-    // Geometry construction
-    float param = vel * time;
-    float3 last = p1;
-
-    //half em = Random(floor((uid + _Time.y) / 4)) > 0.9;
-    half em = snoise(float3(uid + _LocalTime, 0, 0) * 2);
-    //em = pow(abs(em), 10) * 15;
+    // Light emission 
+    half em = snoise(float2(id, _GeoTime));
     em = smoothstep(0.55, 0.65, em) * 1.75;
 
-    for (uint i = 0; i < segments; i++)
+    // Per-primitive random seed
+    half rand = Random(id + 2);
+
+    float3 last = p0;
+    for (uint i = 0; i < GEOFX_POINT_COUNT; i++)
     {
-        float param_f = frac(param);
-        float3 vp = lerp(p1, p2, param_f * 3 - 1);
+        // Base parameters
+        half param = (float)i / GEOFX_POINT_COUNT;
+        float time = baseTime + param * _GeoParams.y;
 
-        float theta = avel * param;
-        float3 pd = ax * cos(theta) + ay * sin(theta);
-        //vp += pd * radius * (0.8 + 1 * snoise(float3(param * 6, primitiveID, time)));
-        float sn1 = snoise(float3(param * 3, uid + 20, time));
-        float sn2 = snoise(float3(param * 3, uid - 34, time));
-        sn1 += snoise(float3(param * 6, uid + 20, time)) / 2;
-        sn2 += snoise(float3(param * 6, uid - 34, time)) / 2;
-        vp += ax * radius * sn1;
-        vp += ay * radius * sn2;
+        // Position parameter along the local Z axis
+        half param_z = 0.5 + 0.7 * snoise(float2(id + 20, time * 0.8));
 
-        param_f += 0.2 * snoise(float3(param * 4, primitiveID + 100, time));
-        float w = smoothstep(trail, 0.5, param_f) * smoothstep(trail, 0.5, 1 - param_f);
+        // Amplification parameter
+        // Don't use the unique ID nor the per-instance time parameter;
+        // This variable is only depend on the absolute position and time.
+        float time_amp = param_z * 0.9 + _GeoTime * 1.9;
+        half amp = 1 + 0.7 * snoise(float2(primitiveID * 53, time_amp));
 
-        float3 pn = normalize(cross(az, vp - last));
+        // Radius
+        half radius = 1 + 0.7 * snoise(float2(id + 40, time * 1.4));
+        radius *= baseRadius * amp;
 
-        outStream.Append(VertexOutput(vp - extent * w, pn, em));
-        outStream.Append(VertexOutput(vp + extent * w, pn, em));
+        // Point position
+        float phi = time * 20;
+        float3 pos = lerp(p0, p1, param_z);
+        pos += (ax * cos(phi) + ay * sin(phi)) * radius;
 
-        last = vp;
-        param += trail / segments;
+        // Normal vector calculation
+        float3 nrm = normalize(cross(az, pos - last));
+
+        // Strip extent
+        float3 ext = az * _GeoParams.z * amp;
+        ext *= smoothstep(0, 0.5, param) * smoothstep(0, 0.5, 1 - param);
+
+        // Vertex output
+        outStream.Append(VertexOutput(pos - ext, nrm, em, rand));
+        outStream.Append(VertexOutput(pos + ext, nrm, em, rand));
+
+        last = pos;
     }
 
     outStream.RestartStrip();
@@ -165,6 +172,12 @@ void Geometry(
 //
 // Fragment phase
 //
+
+half3 HSVM2RGB(half4 hsvm, half rand)
+{
+    hsvm.x += (rand - 0.5) * _MatParams.z;
+    return GammaToLinearSpace(HsvToRgb(hsvm.xyz)) * hsvm.w;
+}
 
 #if defined(PASS_CUBE_SHADOWCASTER)
 
@@ -192,13 +205,17 @@ void Fragment(
     out half4 outEmission : SV_Target3
 )
 {
+    half em = input.color.x;
+    half rand = input.color.y;
+    half3 albedo = HSVM2RGB(_BaseHSVM, rand);
+
     // PBS workflow conversion (metallic -> specular)
     half3 c_diff, c_spec;
     half not_in_use;
 
     c_diff = DiffuseAndSpecularFromMetallic(
-        _Color.rgb, _Metallic, // input
-        c_spec, not_in_use     // output
+        albedo, _MatParams.x, // input
+        c_spec, not_in_use    // output
     );
 
     // Update the GBuffer.
@@ -206,7 +223,7 @@ void Fragment(
     data.diffuseColor = c_diff;
     data.occlusion = 1;
     data.specularColor = c_spec;
-    data.smoothness = _Glossiness;
+    data.smoothness = _MatParams.y;
     data.normalWorld = input.normal * (vface < 0 ? -1 : 1);
     UnityStandardDataToGbuffer(data, outGBuffer0, outGBuffer1, outGBuffer2);
 
@@ -214,7 +231,8 @@ void Fragment(
     half3 sh = ShadeSHPerPixel(data.normalWorld, input.ambient, input.wpos);
     outEmission = half4(sh * data.diffuseColor, 1);
 
-    outEmission += half4(0.2, 0.3, 1.2, 0) * input.emission;
+    // Self emission term
+    outEmission.xyz += HSVM2RGB(_AddHSVM, rand) * em;
 }
 
 #endif

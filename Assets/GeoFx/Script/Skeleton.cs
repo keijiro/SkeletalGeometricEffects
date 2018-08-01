@@ -14,9 +14,14 @@ namespace GeoFx
         #region Editable variables
 
         [SerializeField] Animator _sourceAnimator;
+        [SerializeField, Range(0, 0.5f)] float _baseRadius = 0.25f;
+        [SerializeField, Range(0, 2)] float _stripLength = 0.5f;
+        [SerializeField, Range(0, 0.025f)] float _stripWidth = 0.015f;
         [SerializeField, ColorUsage(false)] Color _baseColor = Color.white;
+        [SerializeField, Range(0, 1)] float _hueShift = 0.1f;
         [SerializeField, Range(0, 1)] float _metallic = 0;
         [SerializeField, Range(0, 1)] float _smoothness = 0.5f;
+        [SerializeField, ColorUsage(false, true)] Color _emissiveColor = Color.white;
 
         [SerializeField, HideInInspector] Shader _shader;
 
@@ -69,10 +74,25 @@ namespace GeoFx
 
         static class ShaderID
         {
-            public static readonly int Color = Shader.PropertyToID("_Color");
-            public static readonly int Metallic = Shader.PropertyToID("_Metallic");
-            public static readonly int Glossiness = Shader.PropertyToID("_Glossiness");
-            public static readonly int LocalTime = Shader.PropertyToID("_LocalTime");
+            public static readonly int GeoParams = Shader.PropertyToID("_GeoParams");
+            public static readonly int GeoTime = Shader.PropertyToID("_GeoTime");
+            public static readonly int BaseHSVM = Shader.PropertyToID("_BaseHSVM");
+            public static readonly int AddHSVM = Shader.PropertyToID("_AddHSVM");
+            public static readonly int MatParams = Shader.PropertyToID("_MatParams");
+        }
+
+        #endregion
+
+        #region Private members
+
+        Material _material;
+
+        Vector4 ColorToHsvm(Color color)
+        {
+            var max = Mathf.Max(color.maxColorComponent, 1e-5f);
+            float h, s, v;
+            Color.RGBToHSV(color / max, out h, out s, out v);
+            return new Vector4(h, s, v, max);
         }
 
         #endregion
@@ -163,10 +183,14 @@ namespace GeoFx
 
         void DrawMesh()
         {
-            _material.SetColor(ShaderID.Color, _baseColor);
-            _material.SetFloat(ShaderID.Metallic, _metallic);
-            _material.SetFloat(ShaderID.Glossiness, _smoothness);
-            _material.SetFloat(ShaderID.LocalTime, LocalTime);
+            var gparams = new Vector3(_baseRadius, _stripLength, _stripWidth);
+            var mparams = new Vector3(_metallic, _smoothness, _hueShift);
+
+            _material.SetVector(ShaderID.GeoParams, gparams);
+            _material.SetFloat(ShaderID.GeoTime, LocalTime);
+            _material.SetVector(ShaderID.BaseHSVM, ColorToHsvm(_baseColor));
+            _material.SetVector(ShaderID.AddHSVM, ColorToHsvm(_emissiveColor));
+            _material.SetVector(ShaderID.MatParams, mparams);
 
             Graphics.DrawMesh(
                 _mesh, transform.localToWorldMatrix,
@@ -178,10 +202,12 @@ namespace GeoFx
 
         #region MonoBehaviour implementation
 
-        Material _material;
-
         void OnValidate()
         {
+            _baseRadius = Mathf.Max(0, _baseRadius);
+            _stripLength = Mathf.Max(0, _stripLength);
+            _stripWidth = Mathf.Max(0, _stripWidth);
+
             // Dispose the current mesh if the vertex count doesn't match.
             if (_mesh != null && _mesh.GetIndexCount(0) != _boneList.Length * 2)
                 _mesh.Clear();

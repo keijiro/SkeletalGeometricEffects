@@ -49,6 +49,12 @@ half3 Hue2RGB(half h)
     return rgb;
 }
 
+half3 HsvToRgb(half3 hsv)
+{
+    half3 p = abs(frac(hsv.x + half3(1, 2.0 / 3, 1.0 / 3)) * 6 - 3);
+    return hsv.z * lerp(1, saturate(p - 1), hsv.y);
+}
+
 // Euler angles rotation matrix
 float3x3 Euler3x3(float3 v)
 {
