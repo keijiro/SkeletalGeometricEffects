@@ -96,7 +96,7 @@ void Geometry(
     inout TriangleStream<Varyings> outStream
 )
 {
-    const float _Radius = 0.15;
+    const float _Radius = 0.25;
 
     // Unique ID
     uint uid = (primitiveID * 53 + instanceID) * 79;

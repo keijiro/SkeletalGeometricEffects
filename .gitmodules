@@ -17,3 +17,7 @@
 	path = Packages/jp.keijiro.klak.timeline.procedural-motion
 	url = https://github.com/keijiro/ProceduralMotionTrack.git
 	branch = upm
+[submodule "Packages/jp.keijiro.kino.post-processing"]
+	path = Packages/jp.keijiro.kino.post-processing
+	url = https://github.com/keijiro/Kino.git
+	branch = upm

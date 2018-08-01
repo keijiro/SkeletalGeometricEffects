@@ -1,4 +1,4 @@
-﻿Shader "Hidden/Skeleton"
+﻿Shader "Hidden/GeoFx/Skeleton"
 {
     Properties
     {
