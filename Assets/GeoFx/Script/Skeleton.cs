@@ -14,14 +14,22 @@ namespace GeoFx
         #region Editable variables
 
         [SerializeField] Animator _sourceAnimator;
+
         [SerializeField, Range(0, 0.5f)] float _baseRadius = 0.25f;
-        [SerializeField, Range(0, 2)] float _stripLength = 0.5f;
         [SerializeField, Range(0, 0.025f)] float _stripWidth = 0.015f;
+        [SerializeField, Range(0, 10)] float _stripSpeed = 4;
+        [SerializeField, Range(0, 5)] float _stripLength = 2;
+
+        [SerializeField, Range(0, 10)] float _waveWidth = 2;
+        [SerializeField, Range(0, 10)] float _waveSpeed = 2;
+        [SerializeField, Range(0, 1)] float _distortion = 0.1f;
+
         [SerializeField, ColorUsage(false)] Color _baseColor = Color.white;
         [SerializeField, Range(0, 1)] float _hueShift = 0.1f;
         [SerializeField, Range(0, 1)] float _metallic = 0;
         [SerializeField, Range(0, 1)] float _smoothness = 0.5f;
         [SerializeField, ColorUsage(false, true)] Color _emissiveColor = Color.white;
+        [SerializeField, Range(0, 1)] float _hilight = 0.1f;
 
         [SerializeField, HideInInspector] Shader _shader;
 
@@ -75,10 +83,10 @@ namespace GeoFx
         static class ShaderID
         {
             public static readonly int GeoParams = Shader.PropertyToID("_GeoParams");
-            public static readonly int GeoTime = Shader.PropertyToID("_GeoTime");
+            public static readonly int AnimParams = Shader.PropertyToID("_AnimParams");
+            public static readonly int MatParams = Shader.PropertyToID("_MatParams");
             public static readonly int BaseHSVM = Shader.PropertyToID("_BaseHSVM");
             public static readonly int AddHSVM = Shader.PropertyToID("_AddHSVM");
-            public static readonly int MatParams = Shader.PropertyToID("_MatParams");
         }
 
         #endregion
@@ -183,14 +191,27 @@ namespace GeoFx
 
         void DrawMesh()
         {
-            var gparams = new Vector3(_baseRadius, _stripLength, _stripWidth);
-            var mparams = new Vector3(_metallic, _smoothness, _hueShift);
+            var gparams = new Vector4(
+                _baseRadius, _stripWidth,
+                _stripSpeed * Mathf.PI * 2,
+                _stripLength * Mathf.PI * 2
+            );
+
+            var aparams = new Vector4(
+                LocalTime + 100,
+                _waveWidth, _waveSpeed, _distortion
+            );
+
+            var mparams = new Vector4(
+                _metallic, _smoothness,
+                _hueShift, _hilight
+            );
 
             _material.SetVector(ShaderID.GeoParams, gparams);
-            _material.SetFloat(ShaderID.GeoTime, LocalTime);
+            _material.SetVector(ShaderID.AnimParams, aparams);
+            _material.SetVector(ShaderID.MatParams, mparams);
             _material.SetVector(ShaderID.BaseHSVM, ColorToHsvm(_baseColor));
             _material.SetVector(ShaderID.AddHSVM, ColorToHsvm(_emissiveColor));
-            _material.SetVector(ShaderID.MatParams, mparams);
 
             Graphics.DrawMesh(
                 _mesh, transform.localToWorldMatrix,

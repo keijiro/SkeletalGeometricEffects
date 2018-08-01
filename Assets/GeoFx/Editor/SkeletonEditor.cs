@@ -11,28 +11,44 @@ namespace GeoFx
     sealed class SkeletonEditor : Editor
     {
         SerializedProperty _sourceAnimator;
+
         SerializedProperty _baseRadius;
-        SerializedProperty _stripLength;
         SerializedProperty _stripWidth;
+        SerializedProperty _stripSpeed;
+        SerializedProperty _stripLength;
+
+        SerializedProperty _waveWidth;
+        SerializedProperty _waveSpeed;
+        SerializedProperty _distortion;
+
         SerializedProperty _baseColor;
         SerializedProperty _hueShift;
         SerializedProperty _metallic;
         SerializedProperty _smoothness;
         SerializedProperty _emissiveColor;
+        SerializedProperty _hilight;
 
         ReorderableList _boneList;
 
         void OnEnable()
         {
             _sourceAnimator = serializedObject.FindProperty("_sourceAnimator");
+
             _baseRadius = serializedObject.FindProperty("_baseRadius");
-            _stripLength = serializedObject.FindProperty("_stripLength");
             _stripWidth = serializedObject.FindProperty("_stripWidth");
+            _stripSpeed = serializedObject.FindProperty("_stripSpeed");
+            _stripLength = serializedObject.FindProperty("_stripLength");
+
+            _waveWidth = serializedObject.FindProperty("_waveWidth");
+            _waveSpeed = serializedObject.FindProperty("_waveSpeed");
+            _distortion = serializedObject.FindProperty("_distortion");
+
             _baseColor = serializedObject.FindProperty("_baseColor");
             _hueShift = serializedObject.FindProperty("_hueShift");
             _metallic = serializedObject.FindProperty("_metallic");
             _smoothness = serializedObject.FindProperty("_smoothness");
             _emissiveColor = serializedObject.FindProperty("_emissiveColor");
+            _hilight = serializedObject.FindProperty("_hilight");
 
             _boneList = new ReorderableList(
                 serializedObject,
@@ -80,14 +96,30 @@ namespace GeoFx
             serializedObject.Update();
 
             EditorGUILayout.PropertyField(_sourceAnimator);
+
+            EditorGUILayout.Space();
+
             EditorGUILayout.PropertyField(_baseRadius);
-            EditorGUILayout.PropertyField(_stripLength);
             EditorGUILayout.PropertyField(_stripWidth);
+            EditorGUILayout.PropertyField(_stripSpeed);
+            EditorGUILayout.PropertyField(_stripLength);
+
+            EditorGUILayout.Space();
+
+            EditorGUILayout.PropertyField(_waveWidth);
+            EditorGUILayout.PropertyField(_waveSpeed);
+            EditorGUILayout.PropertyField(_distortion);
+
+            EditorGUILayout.Space();
+
             EditorGUILayout.PropertyField(_baseColor);
             EditorGUILayout.PropertyField(_hueShift);
             EditorGUILayout.PropertyField(_metallic);
             EditorGUILayout.PropertyField(_smoothness);
             EditorGUILayout.PropertyField(_emissiveColor);
+            EditorGUILayout.PropertyField(_hilight);
+
+            EditorGUILayout.Space();
 
             _boneList.DoLayoutList();
 

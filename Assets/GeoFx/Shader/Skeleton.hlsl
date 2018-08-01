@@ -10,13 +10,13 @@
 #endif
 
 // Effect properties
-float3 _GeoParams; // radius, length, width
-float _GeoTime;
+float4 _GeoParams; // radius, width, speed, length
+float4 _AnimParams; // time, wave width, wave speed, distortion
 
 // Material properties
+half4 _MatParams; // metallic, smoothness, hue shift, hilight
 half4 _BaseHSVM;
 half4 _AddHSVM;
-half3 _MatParams; // metallic, smoothness, hue shift
 
 // Vertex attributes
 struct Attributes
@@ -91,7 +91,7 @@ Varyings VertexOutput(float3 wpos, half3 wnrm, half em, half rand)
 }
 
 #define GEOFX_INSTANCE_COUNT 32
-#define GEOFX_POINT_COUNT 16
+#define GEOFX_POINT_COUNT 32
 
 [instance(GEOFX_INSTANCE_COUNT)]
 [maxvertexcount(GEOFX_POINT_COUNT * 2)]
@@ -102,53 +102,72 @@ void Geometry(
     inout TriangleStream<Varyings> outStream
 )
 {
-    // Unique ID
-    uint id = (primitiveID * GEOFX_INSTANCE_COUNT + instanceID) * 299;
+    const float BaseRadius = _GeoParams.x;
+    const float StripWidth = _GeoParams.y;
+    const float StripSpeed = _GeoParams.z;
+    const float StripLength = _GeoParams.w;
+    const float BaseTime = _AnimParams.x;
+    const float WaveWidth = _AnimParams.y;
+    const float WaveSpeed = _AnimParams.z;
+    const float Distortion = _AnimParams.w;
+    const float HilightProb = _MatParams.w;
 
     // Input vertices
     float3 p0 = input[0].position.xyz;
     float3 p1 = input[1].position.xyz;
 
-    // Bone parameter
-    float baseRadius = input[0].texcoord.x * _GeoParams.x;
+    float3 n0 = input[0].normal;
+    float3 n1 = input[1].normal;
 
     // Bone space axes
-    half3 az = normalize(p1 - p0);
-    half3 ax = normalize(cross(az, input[0].normal));
-    half3 ay = cross(az, ax);
+    half3 az_bone = normalize(p1 - p0);
+    half3 ax_bone = normalize(cross(az_bone, n0));
+    half3 ay_bone = cross(az_bone, ax_bone);
+
+    // Bone parameter
+    float radius_bone = input[0].texcoord.x * BaseRadius;
+
+    // Per-strip unique ID
+    uint id_strip = (primitiveID * GEOFX_INSTANCE_COUNT + instanceID) * 299;
 
     // Time parameters
-    float baseTime = _GeoTime * (0.5 + Random(id + 44)) + Random(id) * 100;
+    float time_strip = BaseTime * (0.5 + Random(id_strip));
 
-    // Light emission 
-    half em = snoise(float2(id, _GeoTime));
-    em = smoothstep(0.55, 0.65, em) * 1.75;
+    // Light emission intensity (per-strip)
+    half em_strip = snoise(float2(id_strip, BaseTime));
+    em_strip = smoothstep(1 - HilightProb, 1.1 - HilightProb, abs(em_strip));
 
-    // Per-primitive random seed
-    half rand = Random(id + 2);
+    // Per-strip random seed
+    half rand_strip = Random(id_strip + 1);
 
     float3 last = p0;
     for (uint i = 0; i < GEOFX_POINT_COUNT; i++)
     {
-        // Base parameters
         half param = (float)i / GEOFX_POINT_COUNT;
-        float time = baseTime + param * _GeoParams.y;
 
-        // Position parameter along the local Z axis
-        half param_z = 0.5 + 0.7 * snoise(float2(id + 20, time * 0.8));
+        // Angular parameter along the bone Z axis
+        float phi = StripSpeed * time_strip + StripLength * param;
+
+        // Position parameter along the bone Z axis
+        half param_z = 0.5 + 0.7 * snoise(float2(id_strip + 20, phi * 0.05));
 
         // Amplification parameter
-        // Don't use the unique ID nor the per-instance time parameter;
-        // This variable is only depend on the absolute position and time.
-        float time_amp = param_z * 0.9 + _GeoTime * 1.9;
+        // Don't use the per-strip ID nor time parameter; This variable should
+        // be only depend on the absolute position and time.
+        float time_amp = BaseTime * WaveSpeed + param_z * WaveWidth;
         half amp = 1 + 0.7 * snoise(float2(primitiveID * 53, time_amp));
 
         // Radius
-        half radius = 1 + 0.7 * snoise(float2(id + 40, time * 1.4));
-        radius *= baseRadius * amp;
+        half radius = 1 + 0.7 * snoise(float2(id_strip + 40, phi * 0.25));
+        radius *= radius_bone * amp;
+
+        // Bone space axes with turbulent noise
+        half2 amod = snoise_grad(float2(id_strip + 60, phi * 0.1)).xy * Distortion;
+        half3 az = normalize(az_bone + ax_bone * amod.x + ay_bone * amod.y);
+        half3 ay = normalize(cross(az, ax_bone));
+        half3 ax = cross(ay, az);
 
         // Point position
-        float phi = time * 20;
         float3 pos = lerp(p0, p1, param_z);
         pos += (ax * cos(phi) + ay * sin(phi)) * radius;
 
@@ -156,12 +175,12 @@ void Geometry(
         float3 nrm = normalize(cross(az, pos - last));
 
         // Strip extent
-        float3 ext = az * _GeoParams.z * amp;
+        float3 ext = az * StripWidth * amp;
         ext *= smoothstep(0, 0.5, param) * smoothstep(0, 0.5, 1 - param);
 
         // Vertex output
-        outStream.Append(VertexOutput(pos - ext, nrm, em, rand));
-        outStream.Append(VertexOutput(pos + ext, nrm, em, rand));
+        outStream.Append(VertexOutput(pos - ext, nrm, em_strip, rand_strip));
+        outStream.Append(VertexOutput(pos + ext, nrm, em_strip, rand_strip));
 
         last = pos;
     }

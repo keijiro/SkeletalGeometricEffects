@@ -244,11 +244,11 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 400026, guid: a2e23193c976434eb66491671c592689, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.000005908312
+      value: -0.0000059176214
       objectReference: {fileID: 0}
     - target: {fileID: 400026, guid: a2e23193c976434eb66491671c592689, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.12968263
+      value: 0.12968265
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a2e23193c976434eb66491671c592689, type: 3}
@@ -767,14 +767,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _sourceAnimator: {fileID: 640605541}
-  _baseRadius: 0.094
-  _stripLength: 0.4
-  _stripWidth: 0.0124
+  _baseRadius: 0.084
+  _stripWidth: 0.01
+  _stripSpeed: 3.46
+  _stripLength: 1.21
+  _waveWidth: 2
+  _waveSpeed: 2
+  _distortion: 0.14
   _baseColor: {r: 1, g: 0, b: 0.0766139, a: 1}
-  _hueShift: 0.15
+  _hueShift: 0.17
   _metallic: 0
-  _smoothness: 0.56
-  _emissiveColor: {r: 1.7411011, g: 1.1880455, b: 0.10924557, a: 0}
+  _smoothness: 0.514
+  _emissiveColor: {r: 4.6428895, g: 2.5784776, b: 0.8103156, a: 0}
+  _hilight: 0.25
   _shader: {fileID: 4800000, guid: bf3c20d05194de249973608a80309b01, type: 3}
   _boneList:
   - JointFrom: 1
@@ -999,7 +1004,7 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1981191758}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 0.8147536}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 0.99605703}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
