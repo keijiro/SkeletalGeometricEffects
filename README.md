@@ -21,3 +21,8 @@ If you're using Git from the command line, please run `git submodule init` and
 can just use the `--recursive` option when initially cloning the repository.
 
 [submodules]: https://git-scm.com/book/en/v2/Git-Tools-Submodules
+
+License
+-------
+
+Public domain
