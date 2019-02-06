@@ -13,7 +13,7 @@ namespace GeoFx
     {
         #region Editable variables
 
-        [SerializeField] Animator _sourceAnimator;
+        [SerializeField] Animator _sourceAnimator = null;
 
         [SerializeField, Range(0, 0.5f)] float _baseRadius = 0.25f;
         [SerializeField, Range(0, 0.025f)] float _stripWidth = 0.015f;
@@ -31,9 +31,9 @@ namespace GeoFx
         [SerializeField, ColorUsage(false, true)] Color _emissiveColor = Color.white;
         [SerializeField, Range(0, 1)] float _hilight = 0.1f;
 
-        [SerializeField] bool _debug;
+        [SerializeField] bool _debug = false;
 
-        [SerializeField, HideInInspector] Shader _shader;
+        [SerializeField, HideInInspector] Shader _shader = null;
 
         #endregion
 
