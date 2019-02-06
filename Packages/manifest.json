@@ -1,12 +1,51 @@
 {
   "dependencies": {
-    "com.unity.package-manager-ui": "1.9.11",
-    "com.unity.postprocessing": "2.0.10-preview",
+    "com.unity.package-manager-ui": "2.0.3",
+    "com.unity.postprocessing": "2.1.3",
+    "jp.keijiro.cmu-mocap": "https://github.com/keijiro/CMUMocap.git#upm",
+    "jp.keijiro.kino.post-processing": "https://github.com/keijiro/Kino.git#upm",
+    "jp.keijiro.klak": "https://github.com/keijiro/Klak.git#upm",
+    "jp.keijiro.klak.timeline.procedural-motion": "https://github.com/keijiro/ProceduralMotionTrack.git#upm",
+    "jp.keijiro.neolowman": "https://github.com/keijiro/NeoLowMan.git#upm",
+    "jp.keijiro.test-assets": "https://github.com/keijiro/jp.keijiro.test-assets.git",
     "com.unity.modules.animation": "1.0.0",
+    "com.unity.modules.audio": "1.0.0",
+    "com.unity.modules.cloth": "1.0.0",
     "com.unity.modules.director": "1.0.0",
     "com.unity.modules.imgui": "1.0.0",
+    "com.unity.modules.jsonserialize": "1.0.0",
     "com.unity.modules.particlesystem": "1.0.0",
     "com.unity.modules.physics": "1.0.0",
-    "com.unity.modules.vr": "1.0.0"
+    "com.unity.modules.unityanalytics": "1.0.0",
+    "com.unity.modules.unitywebrequest": "1.0.0",
+    "com.unity.modules.video": "1.0.0",
+    "com.unity.modules.vr": "1.0.0",
+    "com.unity.modules.xr": "1.0.0"
+  },
+  "lock": {
+    "jp.keijiro.klak.timeline.procedural-motion": {
+      "hash": "bcdcf104956a21500e2894bb762f19b6307cbb8e",
+      "revision": "upm"
+    },
+    "jp.keijiro.test-assets": {
+      "hash": "01619e6a98ff383b7cb2ea27e6a0d39702c7c8f3",
+      "revision": "HEAD"
+    },
+    "jp.keijiro.cmu-mocap": {
+      "hash": "8fda0c1770156a047ed44868c5132748960b01cf",
+      "revision": "upm"
+    },
+    "jp.keijiro.neolowman": {
+      "hash": "f5c336afd91398a640cf954e26ff06a64b551299",
+      "revision": "upm"
+    },
+    "jp.keijiro.klak": {
+      "hash": "998c115201969984019639126bc8d0001c79d243",
+      "revision": "upm"
+    },
+    "jp.keijiro.kino.post-processing": {
+      "hash": "0996b2d07dc1000963cc7264e5528abbebde8425",
+      "revision": "upm"
+    }
   }
 }
